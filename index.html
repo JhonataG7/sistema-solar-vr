@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
@@ -9,85 +10,71 @@
 
   <style>
     body { margin: 0; background: #000; }
+
+    /* HUD 2D */
+    #hudInfo {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      width: 280px;
+      padding: 12px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: none;
+      z-index: 9999;
+    }
+    #hudInfo h2 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+    #hudInfo p {
+      margin: 0;
+      font-size: 15px;
+      white-space: pre-line;
+    }
+
+    /* CROSSHAIR */
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      margin-left: -7px;
+      margin-top: -7px;
+      border: 2px solid white;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+    }
   </style>
 
-  <script>
-  /* ============================
-       TEXTURAS GERADAS POR CANVAS
-     ============================ */
-
-  function createStarTexture(width=4096,height=2048,starCount=5000){
-    const c=document.createElement('canvas');
-    c.width=width; c.height=height;
-    const ctx=c.getContext('2d');
-
-    ctx.fillStyle="#000";
-    ctx.fillRect(0,0,width,height);
-
-    for(let i=0;i<starCount;i++){
-      const x=Math.random()*width;
-      const y=Math.random()*height;
-      const r=Math.random()*1.8;
-      ctx.fillStyle=`rgba(255,255,255,${0.5+Math.random()*0.5})`;
-      ctx.beginPath();
-      ctx.arc(x,y,r,0,Math.PI*2);
-      ctx.fill();
-    }
-    return c.toDataURL("image/jpeg",0.9);
-  }
-
-  function createSaturnRingTexture(size=2048){
-    const c=document.createElement('canvas');
-    c.width=size; c.height=size;
-    const ctx=c.getContext('2d');
-
-    const cx=size/2, cy=size/2;
-    const outer=size*0.48;
-    const inner=size*0.18;
-
-    for(let i=0;i<200;i++){
-      let t=i/199;
-      let rInner=inner+(outer-inner)*t;
-      let thick=(outer-inner)/200;
-      let g=160+Math.random()*70;
-      let alpha=0.25+Math.random()*0.12;
-
-      ctx.beginPath();
-      ctx.fillStyle=`rgba(${g},${g},${g},${alpha})`;
-      ctx.arc(cx,cy,rInner+thick,0,Math.PI*2);
-      ctx.arc(cx,cy,rInner,0,Math.PI*2,true);
-      ctx.fill();
-    }
-
-    return c.toDataURL("image/png");
-  }
-
-  document.addEventListener("DOMContentLoaded",()=>{
-    const assets=document.createElement("a-assets");
-
-    const sky=document.createElement("img");
-    sky.id="gen-sky";
-    sky.src=createStarTexture();
-    assets.appendChild(sky);
-
-    const ring=document.createElement("img");
-    ring.id="gen-ring";
-    ring.src=createSaturnRingTexture();
-    assets.appendChild(ring);
-
-    document.body.appendChild(assets);
-  });
-  </script>
 </head>
 
 <body>
 
+<!-- HUD -->
+
+<div id="hudInfo">
+  <h2 id="hudTitle"></h2>
+  <p id="hudText"></p>
+</div>
+
+<!-- CROSSHAIR -->
+
+<div id="crosshair"></div>
+
 <a-scene background="color: black">
 
-  <!-- Céu estelar -->
-  <a-sky src="#gen-sky" rotation="0 -90 0"></a-sky>
+  <!-- SKY -->
 
-  <!-- Texturas reais dos planetas -->
+<a-sky color="#000"></a-sky>
+
+  <!-- TEXTURES -->
+
   <a-assets timeout="20000">
       <img id="tex-sun" src="./textures/2k_sun.jpg">
       <img id="tex-mercury" src="./textures/2k_mercury.jpg">
@@ -100,119 +87,136 @@
       <img id="tex-neptune" src="./textures/2k_neptune.jpg">
   </a-assets>
 
-  <!-- Câmera com movimento -->
-  <a-entity camera 
-            look-controls="pointerLockEnabled: true"
-            wasd-controls="acceleration: 25"
-            position="0 1.6 8">
-      <a-cursor color="white"></a-cursor>
-  </a-entity>
+  <!-- CAMERA -->
 
-  <!-- Luz solar -->
-  <a-entity light="type: point; intensity: 2" position="0 0 0"></a-entity>
+<a-entity 
+camera 
+look-controls="pointerLockEnabled: true"
+wasd-controls="acceleration: 25"
+position="0 1.6 8"
+cursor="fuse: false"
+raycaster="objects: .planet"> </a-entity>
 
-  <!-- Painel de informações -->
-  <a-entity id="infoPanel" visible="false">
-      <a-plane width="3" height="1.8" color="#000" opacity="0.22"></a-plane>
-      <a-plane width="3.1" height="1.9" color="#fff" opacity="0.05" position="0 0 -0.01"></a-plane>
-      <a-text id="infoText" value="" align="center" width="2.7" color="#fff"></a-text>
-  </a-entity>
+  <!-- LIGHT -->
 
-  <!-- SOL (não tem classe planet!) -->
-  <a-sphere src="#tex-sun" radius="1.7"
-            emissive="#ffaa00"
-            emissiveIntensity="1.25"
-            class="star">
-  </a-sphere>
+<a-entity light="type: point; intensity: 2" position="0 0 0"></a-entity>
 
-  <!-- PLANETAS -->
-  <a-sphere src="#tex-mercury" position="3 0 -5" radius="0.22"
-            animation="property: rotation; to: 0 360 0; dur: 12000; loop: true"
-            class="planet" data-name="Mercúrio"></a-sphere>
+  <!-- SUN -->
 
-  <a-sphere src="#tex-venus" position="5 0 -7" radius="0.36"
-            animation="property: rotation; to: 0 -360 0; dur: 18000; loop: true"
-            class="planet" data-name="Vênus"></a-sphere>
+<a-sphere 
+src="#tex-sun"
+radius="1.7"
+emissive="#ffaa00"
+emissiveIntensity="1.25"> </a-sphere>
 
-  <a-sphere src="#tex-earth" position="7.5 0 -10" radius="0.40"
-            animation="property: rotation; to: 0 360 0; dur: 16000; loop: true"
-            class="planet" data-name="Terra"></a-sphere>
+  <!-- PLANETS -->
 
-  <a-sphere src="#tex-mars" position="10 0 -12" radius="0.32"
-            animation="property: rotation; to: 0 360 0; dur: 20000; loop: true"
-            class="planet" data-name="Marte"></a-sphere>
+<a-sphere src="#tex-mercury" position="3 0 -5" radius="0.22"
+class="planet" data-name="Mercúrio"></a-sphere>
 
-  <a-sphere src="#tex-jupiter" position="15 0 -15" radius="0.95"
-            animation="property: rotation; to: 0 360 0; dur: 30000; loop: true"
-            class="planet" data-name="Júpiter"></a-sphere>
+<a-sphere src="#tex-venus" position="5 0 -7" radius="0.36"
+class="planet" data-name="Vênus"></a-sphere>
 
-  <!-- SATURNO + ANÉIS -->
+<a-sphere src="#tex-earth" position="7.5 0 -10" radius="0.40"
+class="planet" data-name="Terra"></a-sphere>
+
+<a-sphere src="#tex-mars" position="10 0 -12" radius="0.32"
+class="planet" data-name="Marte"></a-sphere>
+
+<a-sphere src="#tex-jupiter" position="15 0 -15" radius="0.95"
+class="planet" data-name="Júpiter"></a-sphere>
+
   <a-entity position="20 0 -17">
       <a-sphere id="saturn" src="#tex-saturn" radius="0.78"
-                animation="property: rotation; to: 0 360 0; dur: 32000; loop: true"
                 class="planet" data-name="Saturno"></a-sphere>
 
-      <a-torus radius="1.35"
-               radius-tubular="0.08"
-               segments-radial="128"
-               segments-tubular="64"
-               rotation="90 0 0"
-               material="src: #gen-ring; transparent: true; opacity: 1; side: double">
-      </a-torus>
+```
+  <a-torus radius="1.35"
+       radius-tubular="0.08"
+       segments-radial="128"
+       segments-tubular="64"
+       rotation="90 0 0"
+       material="color: #bba; transparent: true; opacity: 0.9; side: double">
+  </a-torus>
+```
+
   </a-entity>
 
-  <a-sphere src="#tex-uranus" position="25 0 -19" radius="0.62"
-            animation="property: rotation; to: 0 360 0; dur: 35000; loop: true"
-            class="planet" data-name="Urano"></a-sphere>
+<a-sphere src="#tex-uranus" position="25 0 -19" radius="0.62"
+class="planet" data-name="Urano"></a-sphere>
 
-  <a-sphere src="#tex-neptune" position="30 0 -22" radius="0.58"
-            animation="property: rotation; to: 0 360 0; dur: 38000; loop: true"
-            class="planet" data-name="Netuno"></a-sphere>
-
-  <!-- SCRIPT FINAL -->
-  <script>
-    const info = {
-      "Mercúrio": ["Planeta mais próximo do Sol.","Rochoso e pequeno.","Temperaturas extremas."],
-      "Vênus": ["Atmosfera muito densa.","Efeito estufa extremo.","Rotação invertida."],
-      "Terra": ["Único com vida.","70% de água.","Campo magnético forte."],
-      "Marte": ["Planeta vermelho.","Maior vulcão conhecido.","Possui água congelada."],
-      "Júpiter": ["Maior planeta.","Grande Mancha Vermelha.","Campo magnético poderoso."],
-      "Saturno": ["Famoso pelos anéis.","Baixa densidade.","Ventos intensos."],
-      "Urano": ["Inclinação de 98°.","Cor azul-esverdeada.","Muito frio."],
-      "Netuno": ["Ventos mais rápidos.","Muito distante.","Cor azul intensa."]
-    };
-
-    function format(n){
-      return `${n}\n• ${info[n].join("\n• ")}`;
-    }
-
-    const panel=document.querySelector("#infoPanel");
-    const text=document.querySelector("#infoText");
-    const cam=document.querySelector("[camera]");
-    const planets=document.querySelectorAll(".planet");
-
-    planets.forEach(p => {
-      p.addEventListener("mouseenter", () => {
-        const name = p.getAttribute("data-name");
-
-        // Garante que apenas planetas válidos exibem tooltip
-        if (!name || !info[name]) return;
-
-        text.setAttribute("value", format(name));
-        panel.setAttribute("visible", true);
-
-        panel.object3D.position.copy(p.object3D.position);
-        panel.object3D.position.y += 2.3;
-        panel.object3D.lookAt(cam.object3D.position);
-      });
-
-      p.addEventListener("mouseleave", () => {
-        panel.setAttribute("visible", false);
-      });
-    });
-  </script>
+<a-sphere src="#tex-neptune" position="30 0 -22" radius="0.58"
+class="planet" data-name="Netuno"></a-sphere>
 
 </a-scene>
+
+<script>
+/* INFO DOS PLANETAS */
+const info = {
+  "Mercúrio": [
+    "Planeta mais próximo do Sol.",
+    "Rochoso e pequeno.",
+    "Temperaturas extremas."
+  ],
+  "Vênus": [
+    "Atmosfera muito densa.",
+    "Efeito estufa extremo.",
+    "Rotação invertida."
+  ],
+  "Terra": [
+    "Único planeta conhecido com vida.",
+    "70% de água na superfície.",
+    "Campo magnético poderoso."
+  ],
+  "Marte": [
+    "Planeta vermelho.",
+    "Maior vulcão do Sistema Solar.",
+    "Possui água congelada."
+  ],
+  "Júpiter": [
+    "Maior planeta.",
+    "Grande Mancha Vermelha.",
+    "Campo magnético intenso."
+  ],
+  "Saturno": [
+    "Famoso pelos anéis.",
+    "Baixa densidade.",
+    "Ventos intensos."
+  ],
+  "Urano": [
+    "Inclinação de 98°.",
+    "Cor azul-esverdeada.",
+    "Muito frio."
+  ],
+  "Netuno": [
+    "Ventos mais rápidos.",
+    "Muito distante do Sol.",
+    "Cor azul profunda."
+  ]
+};
+
+const hud = document.getElementById("hudInfo");
+const title = document.getElementById("hudTitle");
+const text = document.getElementById("hudText");
+
+/* QUANDO O RAYCASTER APONTAR PARA O PLANETA */
+document.querySelectorAll(".planet").forEach(planet=>{
+  
+  planet.addEventListener("mouseenter",()=>{
+
+    const name = planet.dataset.name;
+    title.innerText = name;
+    text.innerText = info[name].join("\n");
+    hud.style.display = "block";
+
+  });
+
+  planet.addEventListener("mouseleave",()=>{
+    hud.style.display = "none";
+  });
+
+});
+</script>
 
 </body>
 </html>
